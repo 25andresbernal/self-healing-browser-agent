@@ -1,8 +1,10 @@
-"""Pydantic data models for the ObservePoint Journey AI pipeline.
+"""Pydantic data models for the self-healing browser agent pipeline.
 
 These models back the structured outputs from the LLM (step parser +
 selector generator), the runtime execution results from the browser
-engine, and the final Journey JSON written to disk.
+engine, and the final journey.json written to disk. See the README for
+the full journey.json schema and notes on adapting it to other
+synthetic-monitoring or test-automation tools.
 """
 
 from __future__ import annotations
@@ -17,10 +19,10 @@ from pydantic import BaseModel, Field
 class ActionType(str, Enum):
     """Supported action types.
 
-    The names match ObservePoint's Journey action vocabulary where possible
-    (Navigate, Click, Input, Select, Check, Uncheck), plus a lightweight
-    `verify` / `wait` that we map to assertions or explicit waits at
-    execution time.
+    A small, tool-agnostic vocabulary (navigate, click, input, select,
+    check, uncheck, wait, verify) rather than any one vendor's action
+    names, so the output maps cleanly onto most browser-automation
+    formats.
     """
 
     navigate = "navigate"
@@ -111,6 +113,7 @@ class ResolvedStep(BaseModel):
     step_number: int
     action_name: str
     action_type: ActionType
+    target_description: str = ""
     value: Optional[str] = None
     selectors: list[Selector] = Field(default_factory=list)
     used_selector: Optional[Selector] = None
@@ -131,8 +134,8 @@ class ResolvedStep(BaseModel):
 
 
 class JourneyIdentifier(BaseModel):
-    """ObservePoint-style identifier: one selector per entry, multiple per
-    action for fallback."""
+    """One ranked selector for a step: a candidate location strategy, its
+    predicted stability, and whether it is the one actually used."""
 
     type: str
     value: str
@@ -141,11 +144,12 @@ class JourneyIdentifier(BaseModel):
 
 
 class JourneyStep(BaseModel):
-    """ObservePoint-compatible representation of a single action."""
+    """A single action in the portable journey.json format."""
 
     step_number: int
     action_name: str
-    action_type: str  # Navigate / Click / Input / ... (TitleCase for ObservePoint)
+    action_type: str  # navigate / click / input / select / check / uncheck / wait / verify
+    target_description: str = ""
     value: Optional[str] = None
     identifiers: list[JourneyIdentifier] = Field(default_factory=list)
     screenshot_path: Optional[str] = None

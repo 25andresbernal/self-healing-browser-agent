@@ -1,18 +1,17 @@
-"""Natural language -> structured journey steps, via Claude tool use."""
+"""Natural language -> structured journey steps, via forced tool use."""
 
 from __future__ import annotations
 
-from anthropic import Anthropic
-
-from models import ParsedSteps
-from prompts import STEP_PARSER_SYSTEM, STEP_PARSER_TOOL
-from resilience import retry_with_backoff
+from .llm import LLMClient
+from .models import ParsedSteps
+from .prompts import STEP_PARSER_SYSTEM, STEP_PARSER_TOOL
+from .resilience import retry_with_backoff
 
 
 def parse_steps(
     raw_text: str,
     *,
-    client: Anthropic,
+    client: LLMClient,
     model: str,
     max_tokens: int = 4096,
 ) -> ParsedSteps:

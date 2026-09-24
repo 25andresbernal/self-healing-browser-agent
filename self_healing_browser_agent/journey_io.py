@@ -1,4 +1,9 @@
-"""Assemble the final Journey JSON in ObservePoint-compatible format."""
+"""Assemble and (re)load the portable journey.json format.
+
+See the README's "journey.json schema" section for the field-by-field
+description, and its "Adapters" note for how to map this into another
+synthetic-monitoring or test-automation tool's own format.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +11,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from models import (
+from .models import (
     JourneyConfig,
     JourneyIdentifier,
     JourneyMetadata,
@@ -15,27 +20,6 @@ from models import (
     StabilityRating,
     StepStatus,
 )
-
-
-# ObservePoint uses TitleCase action names (Navigate, Click, Input, ...);
-# the parser stores them lowercase internally. This map bridges the two.
-_ACTION_NAME_MAP = {
-    "navigate": "Navigate",
-    "click": "Click",
-    "input": "Input",
-    "select": "Select",
-    "check": "Check",
-    "uncheck": "Uncheck",
-    "wait": "Watch",  # ObservePoint calls explicit delays "Watch"
-    "verify": "Watch",  # MVP treats verify like a wait-for-visible
-}
-
-# ObservePoint identifier types
-_SELECTOR_TYPE_MAP = {
-    "css": "CSS Selector",
-    "xpath": "XPath",
-}
-
 
 _STABILITY_RANK = {
     StabilityRating.high: 3,
@@ -75,6 +59,13 @@ def write_journey_config(config: JourneyConfig, output_path: Path) -> None:
     output_path.write_text(json.dumps(payload, indent=2, sort_keys=False))
 
 
+def load_journey_config(path: Path) -> JourneyConfig:
+    """Read and validate an existing journey.json, for `journey-agent run`."""
+
+    data = json.loads(Path(path).read_text())
+    return JourneyConfig.model_validate(data)
+
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -87,9 +78,7 @@ def _to_journey_step(step: ResolvedStep) -> JourneyStep:
     for selector in step.selectors:
         identifiers.append(
             JourneyIdentifier(
-                type=_SELECTOR_TYPE_MAP.get(
-                    selector.selector_type.value, "CSS Selector"
-                ),
+                type=selector.selector_type.value,
                 value=selector.selector_value,
                 stability=selector.stability_rating,
                 is_primary=(
@@ -103,7 +92,8 @@ def _to_journey_step(step: ResolvedStep) -> JourneyStep:
     return JourneyStep(
         step_number=step.step_number,
         action_name=step.action_name,
-        action_type=_ACTION_NAME_MAP.get(step.action_type.value, step.action_type.value),
+        action_type=step.action_type.value,
+        target_description=step.target_description,
         value=step.value,
         identifiers=identifiers,
         screenshot_path=step.screenshot_path,

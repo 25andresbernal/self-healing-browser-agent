@@ -1,28 +1,28 @@
 """LLM-powered selector generator.
 
 Given a target description and a compact DOM context, returns the top
-ranked selectors for the target element. Uses Anthropic forced tool use
-so the output is structured and Pydantic-validated.
+ranked selectors for the target element. Uses forced tool use (Anthropic
+tool_choice, or the equivalent canned response from FakeLLM) so the
+output is structured and Pydantic-validated.
 """
 
 from __future__ import annotations
 
-from anthropic import Anthropic
-
-from models import RankedSelectors, Selector
-from prompts import (
+from .llm import LLMClient
+from .models import RankedSelectors, Selector
+from .prompts import (
     SELECTOR_SYSTEM,
     SELECTOR_TOOL,
     build_selector_user_message,
 )
-from resilience import retry_with_backoff
+from .resilience import retry_with_backoff
 
 
 def generate_selectors(
     target_description: str,
     dom_context: str,
     *,
-    client: Anthropic,
+    client: LLMClient,
     model: str,
     retry_hint_selectors: list[Selector] | None = None,
     max_tokens: int = 2048,

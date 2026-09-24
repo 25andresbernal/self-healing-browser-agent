@@ -1,11 +1,11 @@
 """Playwright wrapper + per-step resilience layer.
 
 This is where most of the "doesn't break so easy" behavior lives:
-  - Adaptive waits (Resilience §4)
-  - Overlay auto-dismissal (Resilience §3, via resilience.dismiss_common_overlays)
-  - Visibility / scroll-into-view checks before acting (Resilience §5)
-  - Fallback selector execution + runtime re-analysis (Resilience §2)
-  - Step-level try/except so one bad step never crashes the run (Resilience §7)
+  - Adaptive waits
+  - Overlay auto-dismissal (via resilience.dismiss_common_overlays)
+  - Visibility / scroll-into-view checks before acting
+  - Fallback selector execution + runtime re-analysis
+  - Step-level try/except so one bad step never crashes the run
 """
 
 from __future__ import annotations
@@ -25,8 +25,8 @@ from playwright.sync_api import (
     sync_playwright,
 )
 
-from models import ActionType, ParsedStep, Selector, SelectorType, StepStatus
-from resilience import dismiss_common_overlays
+from .models import ActionType, ParsedStep, Selector, SelectorType, StepStatus
+from .resilience import dismiss_common_overlays
 
 
 NETWORKIDLE_TIMEOUT_MS = 10_000
@@ -188,11 +188,16 @@ class BrowserEngine:
     def _try_selectors(
         self, step: ParsedStep, selectors: list[Selector]
     ) -> ExecutionResult:
-        tried: list[Selector] = []
+        # `tried` always holds the full ranked candidate list, not just the
+        # ones Playwright actually attempted before succeeding -- the
+        # output journey.json is meant to preserve the whole fallback
+        # chain (for adapters, and so `journey-agent run` has all of it
+        # to fall back through next time), not just what happened to work
+        # on this particular run.
+        tried: list[Selector] = list(selectors)
         last_error: Optional[str] = None
 
         for selector in selectors:
-            tried.append(selector)
             try:
                 locator = self._locator_for(selector)
                 # Resolve visibility / interactability before doing the
@@ -231,8 +236,8 @@ class BrowserEngine:
         """Pick the first visible match, scroll into view, wait for attached.
 
         If the locator resolves to multiple elements (strict mode), fall
-        back to `.first` — Resilience §5's "prefer the first visible match"
-        rule.
+        back to `.first` and prefer the first visible match rather than
+        erroring out on a strict-mode violation.
         """
         try:
             count = locator.count()

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fixture Co. -- About</title>
+  <style>
+    body { font-family: sans-serif; max-width: 640px; margin: 3rem auto; color: #1a1a1a; }
+    #signup-button { background: #0b5fff; color: white; border: none; padding: 0.6rem 1.2rem;
+      border-radius: 6px; font-size: 1rem; cursor: pointer; }
+    #signup-confirmation { display: none; margin-top: 1rem; color: #157a3d; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1 data-testid="about-heading">About Fixture Co.</h1>
+  <p>We are a fixture. We exist only so the demo has something to click.</p>
+  <button id="signup-button" data-testid="signup-button">Join the newsletter</button>
+  <p id="signup-confirmation" data-testid="signup-confirmation">You are signed up. Thanks!</p>
+  <script>
+    document.getElementById("signup-button").addEventListener("click", () => {
+      document.getElementById("signup-confirmation").style.display = "block";
+    });
+  </script>
+</body>
+</html>
