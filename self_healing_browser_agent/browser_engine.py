@@ -12,22 +12,23 @@ from __future__ import annotations
 
 import re
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Optional
 
 from playwright.sync_api import (
     Browser,
     BrowserContext,
-    Error as PlaywrightError,
     Page,
     Playwright,
     sync_playwright,
 )
+from playwright.sync_api import (
+    Error as PlaywrightError,
+)
 
 from .models import ActionType, ParsedStep, Selector, SelectorType, StepStatus
 from .resilience import dismiss_common_overlays
-
 
 NETWORKIDLE_TIMEOUT_MS = 10_000
 ACTION_TIMEOUT_MS = 8_000
@@ -37,10 +38,10 @@ DEFAULT_VIEWPORT = {"width": 1920, "height": 1080}
 @dataclass
 class ExecutionResult:
     status: StepStatus
-    used_selector: Optional[Selector] = None
+    used_selector: Selector | None = None
     selectors_tried: list[Selector] = field(default_factory=list)
     healed: bool = False
-    error: Optional[str] = None
+    error: str | None = None
     dismissed_overlays: list[str] = field(default_factory=list)
 
 
@@ -48,10 +49,10 @@ class BrowserEngine:
     def __init__(self, *, headless: bool = True, auto_dismiss: bool = True) -> None:
         self._headless = headless
         self._auto_dismiss = auto_dismiss
-        self._pw: Optional[Playwright] = None
-        self._browser: Optional[Browser] = None
-        self._context: Optional[BrowserContext] = None
-        self._page: Optional[Page] = None
+        self._pw: Playwright | None = None
+        self._browser: Browser | None = None
+        self._context: BrowserContext | None = None
+        self._page: Page | None = None
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -89,14 +90,10 @@ class BrowserEngine:
     def adaptive_wait(self) -> None:
         """wait_for_load_state('networkidle') with a graceful fallback."""
         try:
-            self.page.wait_for_load_state(
-                "networkidle", timeout=NETWORKIDLE_TIMEOUT_MS
-            )
+            self.page.wait_for_load_state("networkidle", timeout=NETWORKIDLE_TIMEOUT_MS)
         except PlaywrightError:
             try:
-                self.page.wait_for_load_state(
-                    "domcontentloaded", timeout=NETWORKIDLE_TIMEOUT_MS
-                )
+                self.page.wait_for_load_state("domcontentloaded", timeout=NETWORKIDLE_TIMEOUT_MS)
             except PlaywrightError:
                 pass
             time.sleep(0.5)
@@ -106,7 +103,7 @@ class BrowserEngine:
             return []
         return dismiss_common_overlays(self.page)
 
-    def screenshot(self, path: Path) -> Optional[str]:
+    def screenshot(self, path: Path) -> str | None:
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             self.page.screenshot(path=str(path), full_page=False)
@@ -139,7 +136,7 @@ class BrowserEngine:
         step: ParsedStep,
         selectors: list[Selector],
         *,
-        regenerate: Optional[Callable[[list[Selector]], list[Selector]]] = None,
+        regenerate: Callable[[list[Selector]], list[Selector]] | None = None,
     ) -> ExecutionResult:
         """Try each selector in order; on total failure, invoke `regenerate`
         once for runtime re-analysis and try again.
@@ -164,9 +161,7 @@ class BrowserEngine:
         try:
             new_selectors = regenerate(selectors)
         except Exception as exc:
-            result.error = (
-                (result.error or "") + f" | re-analysis errored: {exc}"
-            )
+            result.error = (result.error or "") + f" | re-analysis errored: {exc}"
             return result
 
         if not new_selectors:
@@ -176,18 +171,12 @@ class BrowserEngine:
         healed_result.healed = healed_result.status == StepStatus.resolved
         # Merge the pre-regen failures into the tried list so output JSON
         # shows everything that was attempted.
-        healed_result.selectors_tried = (
-            selectors + healed_result.selectors_tried
-        )
+        healed_result.selectors_tried = selectors + healed_result.selectors_tried
         if healed_result.status != StepStatus.resolved and result.error:
-            healed_result.error = (
-                f"{result.error} | after re-analysis: {healed_result.error}"
-            )
+            healed_result.error = f"{result.error} | after re-analysis: {healed_result.error}"
         return healed_result
 
-    def _try_selectors(
-        self, step: ParsedStep, selectors: list[Selector]
-    ) -> ExecutionResult:
+    def _try_selectors(self, step: ParsedStep, selectors: list[Selector]) -> ExecutionResult:
         # `tried` always holds the full ranked candidate list, not just the
         # ones Playwright actually attempted before succeeding -- the
         # output journey.json is meant to preserve the whole fallback
@@ -195,7 +184,7 @@ class BrowserEngine:
         # to fall back through next time), not just what happened to work
         # on this particular run.
         tried: list[Selector] = list(selectors)
-        last_error: Optional[str] = None
+        last_error: str | None = None
 
         for selector in selectors:
             try:
@@ -282,7 +271,7 @@ class BrowserEngine:
         self.adaptive_wait()
 
 
-def _seconds_from_value(value: Optional[str]) -> float:
+def _seconds_from_value(value: str | None) -> float:
     if not value:
         return 1.0
     match = re.search(r"[\d.]+", value)

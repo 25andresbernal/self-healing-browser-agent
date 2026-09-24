@@ -22,7 +22,7 @@ from pathlib import Path
 
 from .browser_engine import BrowserEngine
 from .journey_io import build_journey_config, write_journey_config
-from .llm import AnthropicLLM, DEFAULT_MODEL, default_model
+from .llm import DEFAULT_MODEL, AnthropicLLM, default_model
 from .models import ParsedStep, ResolvedStep
 from .pipeline import print_step_result, print_summary, resolve_step
 from .runner import run_journey
@@ -210,7 +210,9 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     build_p.add_argument("--url", required=True, help="Target URL to start the journey on.")
     steps_group = build_p.add_mutually_exclusive_group()
     steps_group.add_argument("--steps", help="Inline natural-language description of the journey.")
-    steps_group.add_argument("--steps-file", help="Path to a text file containing the journey steps.")
+    steps_group.add_argument(
+        "--steps-file", help="Path to a text file containing the journey steps."
+    )
     build_p.add_argument(
         "--output",
         default="output/journey.json",

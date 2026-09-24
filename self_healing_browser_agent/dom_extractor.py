@@ -151,7 +151,8 @@ _CANDIDATE_SCRIPT = r"""
   };
 
   const elements = Array.from(document.querySelectorAll(
-    'a, button, input, select, textarea, [role], [aria-label], [data-testid], [contenteditable="true"]'
+    'a, button, input, select, textarea, [role], [aria-label], ' +
+    '[data-testid], [contenteditable="true"]'
   ));
 
   const scored = [];

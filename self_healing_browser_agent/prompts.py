@@ -86,7 +86,9 @@ STEP_PARSER_TOOL = {
                         },
                         "value": {
                             "type": ["string", "null"],
-                            "description": "Text to type, URL to navigate to, seconds to wait, or null.",
+                            "description": (
+                                "Text to type, URL to navigate to, seconds to wait, or null."
+                            ),
                         },
                     },
                     "required": [
@@ -176,7 +178,10 @@ SELECTOR_TOOL = {
                         },
                         "reasoning": {
                             "type": "string",
-                            "description": "One-sentence justification for the selector choice and stability rating.",
+                            "description": (
+                                "One-sentence justification for the selector "
+                                "choice and stability rating."
+                            ),
                         },
                     },
                     "required": [

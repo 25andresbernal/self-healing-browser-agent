@@ -9,7 +9,8 @@ LLM layer.
 from __future__ import annotations
 
 import time
-from typing import Callable, TypeVar
+from collections.abc import Callable
+from typing import TypeVar
 
 try:  # these are the retryable SDK errors; import defensively so tests
     # that stub the anthropic client still work.
@@ -21,9 +22,9 @@ try:  # these are the retryable SDK errors; import defensively so tests
         RateLimitError,
     )
 except Exception:  # pragma: no cover
-    APIConnectionError = APIStatusError = APITimeoutError = (
-        InternalServerError
-    ) = RateLimitError = Exception  # type: ignore[assignment,misc]
+    APIConnectionError = APIStatusError = APITimeoutError = InternalServerError = RateLimitError = (
+        Exception  # type: ignore[assignment,misc]
+    )
 
 
 T = TypeVar("T")

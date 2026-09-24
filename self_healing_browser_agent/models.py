@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -67,7 +66,7 @@ class ParsedStep(BaseModel):
         description="Plain-English description of the element or target, e.g. "
         "'Sign In button in the top navigation'.",
     )
-    value: Optional[str] = Field(
+    value: str | None = Field(
         default=None,
         description="Text to input, URL to navigate to, seconds to wait, or JS "
         "to execute. Null when the action takes no value (e.g. Click).",
@@ -114,17 +113,17 @@ class ResolvedStep(BaseModel):
     action_name: str
     action_type: ActionType
     target_description: str = ""
-    value: Optional[str] = None
+    value: str | None = None
     selectors: list[Selector] = Field(default_factory=list)
-    used_selector: Optional[Selector] = None
+    used_selector: Selector | None = None
     healed: bool = Field(
         default=False,
         description="True when the step succeeded only after runtime "
         "re-analysis (all pre-generated selectors failed).",
     )
     status: StepStatus
-    error: Optional[str] = None
-    screenshot_path: Optional[str] = None
+    error: str | None = None
+    screenshot_path: str | None = None
     dismissed_overlays: list[str] = Field(default_factory=list)
 
 
@@ -150,12 +149,12 @@ class JourneyStep(BaseModel):
     action_name: str
     action_type: str  # navigate / click / input / select / check / uncheck / wait / verify
     target_description: str = ""
-    value: Optional[str] = None
+    value: str | None = None
     identifiers: list[JourneyIdentifier] = Field(default_factory=list)
-    screenshot_path: Optional[str] = None
+    screenshot_path: str | None = None
     status: StepStatus = StepStatus.resolved
     healed: bool = False
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class JourneyMetadata(BaseModel):

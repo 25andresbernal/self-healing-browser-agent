@@ -37,8 +37,7 @@ def generate_selectors(
     retry_hint: str | None = None
     if retry_hint_selectors:
         retry_hint = "\n".join(
-            f"  - ({s.selector_type.value}) {s.selector_value}"
-            for s in retry_hint_selectors
+            f"  - ({s.selector_type.value}) {s.selector_value}" for s in retry_hint_selectors
         )
 
     user_message = build_selector_user_message(

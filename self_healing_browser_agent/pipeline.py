@@ -11,7 +11,6 @@ demo -- share one implementation instead of two copies that drift.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 from .browser_engine import BrowserEngine, ExecutionResult
 from .dom_extractor import build_context
@@ -28,7 +27,7 @@ def resolve_step(
     model: str,
     screenshots_dir: Path,
     take_screenshots: bool,
-    initial_selectors: Optional[list[Selector]] = None,
+    initial_selectors: list[Selector] | None = None,
 ) -> ResolvedStep:
     """Execute one step and package the result as a ResolvedStep.
 
@@ -52,9 +51,7 @@ def resolve_step(
             if not step.value:
                 return _unresolved(step, action_name, "navigate step has no URL")
             result = engine.navigate(step.value)
-            screenshot_path = _capture_screenshot(
-                engine, screenshots_dir, step, take_screenshots
-            )
+            screenshot_path = _capture_screenshot(engine, screenshots_dir, step, take_screenshots)
             return ResolvedStep(
                 step_number=step.step_number,
                 action_name=action_name,
@@ -93,19 +90,13 @@ def resolve_step(
                 retry_hint_selectors=failed,
             )
 
-        result: ExecutionResult = engine.execute_action(
-            step, selectors, regenerate=regenerate
-        )
+        result: ExecutionResult = engine.execute_action(step, selectors, regenerate=regenerate)
 
-        screenshot_path = _capture_screenshot(
-            engine, screenshots_dir, step, take_screenshots
-        )
+        screenshot_path = _capture_screenshot(engine, screenshots_dir, step, take_screenshots)
 
         # Prefer the merged "selectors_tried" list so output JSON shows
         # everything the run evaluated (including healed ones).
-        final_selectors = (
-            result.selectors_tried if result.selectors_tried else selectors
-        )
+        final_selectors = result.selectors_tried if result.selectors_tried else selectors
 
         return ResolvedStep(
             step_number=step.step_number,
@@ -150,7 +141,7 @@ def _capture_screenshot(
     screenshots_dir: Path,
     step: ParsedStep,
     take: bool,
-) -> Optional[str]:
+) -> str | None:
     if not take:
         return None
     path = screenshots_dir / f"step_{step.step_number:02d}.png"

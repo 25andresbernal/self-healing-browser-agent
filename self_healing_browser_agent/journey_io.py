@@ -8,7 +8,7 @@ synthetic-monitoring or test-automation tool's own format.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .models import (
@@ -46,7 +46,7 @@ def build_journey_config(
     )
     return JourneyConfig(
         journey_name=journey_name,
-        generated_at=datetime.now(tz=timezone.utc),
+        generated_at=datetime.now(tz=UTC),
         target_url=target_url,
         steps=journey_steps,
         metadata=metadata,
@@ -116,9 +116,7 @@ def _build_metadata(
     healed = sum(1 for s in resolved_steps if s.healed)
 
     rated = [
-        s.used_selector.stability_rating
-        for s in resolved_steps
-        if s.used_selector is not None
+        s.used_selector.stability_rating for s in resolved_steps if s.used_selector is not None
     ]
     if rated:
         avg_rank = sum(_STABILITY_RANK[r] for r in rated) / len(rated)

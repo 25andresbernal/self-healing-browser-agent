@@ -20,7 +20,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-
 DEFAULT_MODEL_ENV_VAR = "ANTHROPIC_MODEL"
 DEFAULT_MODEL = "claude-sonnet-5"
 
@@ -35,7 +34,7 @@ class LLMClient(Protocol):
     """Structural type both the real Anthropic client and FakeLLM satisfy."""
 
     @property
-    def messages(self) -> "_MessagesLike": ...
+    def messages(self) -> _MessagesLike: ...
 
 
 class _MessagesLike(Protocol):
@@ -104,7 +103,7 @@ class FakeLLM:
     calls: list[dict] = field(default_factory=list, repr=False)
 
     @property
-    def messages(self) -> "_FakeMessages":
+    def messages(self) -> _FakeMessages:
         return _FakeMessages(self)
 
 
@@ -134,8 +133,7 @@ class _FakeMessages:
     def _answer_step_parser(self) -> _FakeResponse:
         if self._fake.parsed_steps is None:
             raise FakeLLMError(
-                "FakeLLM.parsed_steps was not set; nothing to return for "
-                "the step parser."
+                "FakeLLM.parsed_steps was not set; nothing to return for the step parser."
             )
         block = _ToolUseBlock(name="record_parsed_steps", input=self._fake.parsed_steps)
         return _FakeResponse(content=[block])
@@ -159,9 +157,7 @@ class _FakeMessages:
                 f"FakeLLM has no scripted selectors for target {target!r} "
                 f"(re-analysis={is_reanalysis})"
             )
-        block = _ToolUseBlock(
-            name="record_ranked_selectors", input={"selectors": selectors}
-        )
+        block = _ToolUseBlock(name="record_ranked_selectors", input={"selectors": selectors})
         return _FakeResponse(content=[block])
 
 
